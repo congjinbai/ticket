@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机票信息生成器</title>
+    <style>
+        /* 原有样式保持不变 */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 9px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        select {
+            height: 38px;
+        }
+        textarea {
+            height: 160px;
+            resize: vertical;
+            font-family: Consolas, monospace;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .flight-segment {
+            border: 1px solid #ddd;
+            padding: 18px;
+            margin-bottom: 22px;
+            border-radius: 6px;
+            position: relative;
+            background-color: #f9f9f9;
+        }
+        .add-segment {
+            background-color: #2ecc71;
+            margin-bottom: 18px;
+        }
+        .add-segment:hover {
+            background-color: #27ae60;
+        }
+        .remove-segment {
+            background-color: #e74c3c;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+        .remove-segment:hover {
+            background-color: #c0392b;
+        }
+        .output {
+            margin-top: 25px;
+            white-space: pre-wrap;
+            background-color: #f0f7ff;
+            padding: 18px;
+            border-radius: 6px;
+            border: 1px solid #d6e4f0;
+            font-family: Consolas, monospace;
+            line-height: 1.5;
+        }
+        .copy-btn {
+            background-color: #9b59b6;
+            margin-top: 12px;
+        }
+        .copy-btn:hover {
+            background-color: #8e44ad;
+        }
+        .flex-row {
+            display: flex;
+            gap: 12px;
+        }
+        .flex-row > div {
+            flex: 1;
+        }
+        .hidden {
+            display: none;
+        }
+        .airport-select {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .airport-select select {
+            flex: 3;
+        }
+        .airport-select input {
+            flex: 2;
+        }
+        .airport-select button {
+            flex: 1;
+            padding: 8px;
+            font-size: 13px;
+        }
+        .terminal-input {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .terminal-input input {
+            width: 70px;
+        }
+        .luggage-input {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .luggage-input input {
+            width: 60px;
+        }
+        .time-input {
+            position: relative;
+        }
+        .night-notice {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        .segment-date {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .return-date {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .time-warning {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 3px;
+            display: none;
+        }
+        .auto-fill-btn {
+            background-color: #f39c12;
+            margin-top: 5px;
+        }
+        .auto-fill-btn:hover {
+            background-color: #d35400;
+        }
+        
+        /* 备注选项样式 */
+        .notes-container {
+            margin-top: 10px;
+            width: 100%;
+        }
+        .note-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .note-option {
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 15px;
+            padding: 5px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .note-option:hover {
+            background-color: #d0d0d0;
+        }
+        .note-option.selected {
+            background-color: #3498db;
+            color: white;
+        }
+        .note-input-container {
+            margin-top: 10px;
+        }
+        #additionalNotes {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* 新增：中转提示和选座信息的布局 */
+        .transfer-seat-container {
+            display: flex;
+            gap: 12px;
+        }
+        .transfer-container {
+            flex: 1; /* 占一半宽度 */
+        }
+        .seat-container {
+            flex: 1; /* 占一半宽度 */
+        }
+        .seat-input {
+            text-transform: uppercase; /* 自动转换为大写 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✈️ 机票信息生成器 ✈️</h1>
+        
+        <div class="form-group">
+            <label for="passengerNames">乘客姓名(格式：拼音字母):</label>
+            <input type="text" id="passengerNames" placeholder="例如: WANG/YAMEI">
+        </div>
+        
+        <div class="form-group">
+            <label for="tripType">行程类型:</label>
+            <select id="tripType">
+                <option value="的行程如下:">单程</option>
+                <option value="的往返行程如下:">往返</option>
+                <option value="的行程更改如下:">更改行程</option>
+                <option value="的往返行程更改如下:">往返行程更改</option>
+            </select>
+        </div>
+        
+        <div class="flex-row">
+            <div class="form-group">
+                <label for="departureCity">出发城市:</label>
+                <div class="airport-select">
+                    <select id="departureCity-select" onchange="updateAirportInput('departureCity', this.value)">
+                        <option value="">选择常用机场</option>
+                    </select>
+                    <input type="text" id="departureCity" placeholder="输入出发城市">
+                    <button onclick="saveAirport('departureCity')">保存</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="arrivalCity">到达城市:</label>
+                <div class="airport-select">
+                    <select id="arrivalCity-select" onchange="updateAirportInput('arrivalCity', this.value)">
+                        <option value="">选择常用机场</option>
+                    </select>
+                    <input type="text" id="arrivalCity" placeholder="输入到达城市">
+                    <button onclick="saveAirport('arrivalCity')">保存</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="flightSegments">
+            <!-- 航班段将在这里动态添加 -->
+        </div>
+        
+        <button class="add-segment" onclick="addFlightSegment()">+ 添加航班段</button>
+        
+        <div class="flex-row">
+            <div class="form-group">
+                <label for="handLuggage">手提行李要求:</label>
+                <select id="handLuggage">
+                    <option value="尺寸要求严格36*30*27厘米">尺寸要求严格36*30*27厘米</option>
+                    <option value="尺寸要求严格40*30*20厘米">尺寸要求严格40*30*20厘米</option>
+                    <option value="5公斤">5公斤</option>
+                    <option value="10公斤">10公斤</option>
+                    <option value="各5公斤">各5公斤</option>
+                    <option value="各10公斤">各10公斤</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="checkedLuggage">托运行李要求:</label>
+                <select id="checkedLuggage" onchange="toggleLuggageInput()">
+                    <option value="无">无</option>
+                    <option value="1件，共20公斤">1件，共20公斤</option>
+                    <option value="1件，共23公斤">1件，共23公斤</option>
+                    <option value="各1件，每件20公斤">各1件，每件20公斤</option>
+                    <option value="各1件，每件23公斤">各1件，每件23公斤</option>
+                    <option value="multiple-20">共*件，每件20公斤</option>
+                    <option value="multiple-23">共*件，每件23公斤</option>
+                </select>
+                <div id="luggageCountInput" class="hidden">
+                    <div class="luggage-input">
+                        <span>共</span>
+                        <input type="number" id="luggageCount" min="1" value="1">
+                        <span>件行李</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 备注信息区域 -->
+        <div class="form-group">
+            <label>备注信息:</label>
+            <div class="note-options">
+                <button class="note-option" onclick="toggleNote(this, '锂电池随身携带')">锂电池随身携带</button>
+                <button class="note-option" onclick="toggleNote(this, '液体不超过100ml')">液体不超过100ml</button>
+                <button class="note-option" onclick="toggleNote(this, '贵重物品随身携带')">贵重物品随身携带</button>
+                <button class="note-option" onclick="toggleNote(this, '药品需处方')">药品需处方</button>
+                <button class="note-option" onclick="toggleNote(this, '免税品单独包装')">免税品单独包装</button>
+                <button class="note-option" onclick="toggleNote(this, '易碎物品')">易碎物品</button>
+                <button class="note-option" onclick="toggleNote(this, '电子产品需取出')">电子产品需取出</button>
+            </div>
+            <input type="text" id="additionalNotes" placeholder="可手动输入其他备注信息，多个信息用逗号隔开" 
+                   oninput="syncNotesFromInput()" style="width: 100%;">
+        </div>
+        
+        <div style="margin-top: 25px; text-align: center;">
+            <button onclick="generateMessage()" style="background-color: #2ecc71;">生成信息</button>
+            <button onclick="resetForm()" style="background-color: #e74c3c;">重置表单</button>
+        </div>
+        
+        <div class="output" id="output"></div>
+        <button class="copy-btn" onclick="copyToClipboard()">复制到剪贴板</button>
+    </div>
+
+    <script>
+        // 常用机场数据
+        const commonAirports = [
+            "奥斯", "埃里温", "巴尔瑙尔", "布市", "布拉格维申斯克", "车里雅宾斯克", "格罗兹尼", "海参崴", "哈巴", "哈巴罗夫斯克", 
+            "克市", "克拉斯诺亚尔斯克", "马嘎斯", "莫斯科", "莫斯科Шереметьево", "莫斯科Домодедово", "莫斯科Внуково", 
+            "圣彼得堡", "索契", "新西伯利亚", "叶卡","叶卡捷琳堡", "北京", "北京首都", "北京大兴", "上海", "广州", 
+            "西安", "杭州", "沈阳", "哈尔滨", "重庆", "青岛", "成都", "三亚", "深圳", "长春"
+        ];
+        
+        // 常用航班号数据
+        const commonFlightNumbers = [
+            "SU-", "U6-", "S7-", "DP-", "UT-", "WZ-", "IO-", "N4-", "YC-", "HZ-", "5N-", "A4-", 
+            "3U-3887", "3U-3888", "CA-910", "CA-960", "CZ-310", "CZ-342", "CZ-656", "DP-6904", "DP-6903", "DP-6569", 
+            "DP-6570", "DP-413", "DP-414", "GS-7942", "HU-7962", "HU-6972", "HU-7986", "JD-495", "JD-496", "JD-608",
+            "MU-2076", "MU-6019", "SU-1498", "SU-1499", "SU-1496", "SU-1497", "SU-208", "SU-204" 
+        ];
+        
+        // 存储选中的备注
+        let selectedNotes = new Set();
+        
+        let segmentCount = 0;
+        let savedAirports = [...commonAirports];
+        let savedFlightNumbers = [...commonFlightNumbers];
+        let previousArrivalTime = null;
+        
+        // 初始化机场选择框
+        function initAirportSelects() {
+            const selects = [
+                "departureCity-select", "arrivalCity-select"
+            ];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">选择常用机场</option>' + 
+                    savedAirports.map(airport => 
+                        `<option value="${airport}">${airport}</option>`
+                    ).join('');
+            });
+        }
+        
+        // 自动将乘客姓名转为大写并将空格替换为/
+        document.getElementById('passengerNames').addEventListener('input', function(e) {
+            this.value = this.value.replace(/\s+/g, '/').toUpperCase();
+        });
+        
+        // 日期输入自动格式化
+        function formatDateInput(input) {
+            const value = input.value.replace(/\D/g, '');
+            if (value.length === 4) {
+                input.value = `${value.substr(0, 2)}月${value.substr(2, 2)}日`;
+            }
+        }
+        
+        // 时间输入自动格式化（4位数字转时间格式）
+        function formatTimeInput(input) {
+            // 移除所有非数字字符
+            let value = input.value.replace(/\D/g, '');
+            // 限制长度为4位
+            if (value.length > 4) {
+                value = value.substring(0, 4);
+            }
+            // 格式化时间
+            if (value.length === 2) {
+                input.value = value + ':';
+            } else if (value.length > 2) {
+                input.value = value.substring(0, 2) + ':' + value.substring(2);
+            } else {
+                input.value = value;
+            }
+        }
+        
+        // 计算前一天日期（用于后半夜提示）
+        function getPreviousDay(dateStr) {
+            // 解析"MM月DD日"格式
+            const match = dateStr.match(/(\d+)月(\d+)日/);
+            if (!match) return '';
+            const month = parseInt(match[1], 10);
+            const day = parseInt(match[2], 10);
+            
+            // 创建日期对象（使用当前年份，不影响日计算）
+            const date = new Date();
+            date.setMonth(month - 1); // 月份从0开始
+            date.setDate(day);
+            // 减去一天
+            date.setDate(date.getDate() - 1);
+            
+            // 返回日部分
+            return `${date.getDate()}日`;
+        }
+        
+        function addFlightSegment() {
+            segmentCount++;
+            const segmentsDiv = document.getElementById('flightSegments');
+            
+            const segmentDiv = document.createElement('div');
+            segmentDiv.className = 'flight-segment';
+            segmentDiv.id = 'segment' + segmentCount;
+            
+            segmentDiv.innerHTML = `
+                <button class="remove-segment" onclick="removeSegment('segment${segmentCount}')">× 删除</button>
+                
+                <div class="form-group">
+                    <label>起飞日期:</label>
+                    <input type="text" id="segment${segmentCount}-date" placeholder="例如: 0822" oninput="formatDateInput(this)">
+                </div>
+                
+                <div class="form-group">
+                    <label>出发机场:</label>
+                    <div class="airport-select">
+                        <select id="segment${segmentCount}-from-select" onchange="updateAirportInput('segment${segmentCount}-from', this.value)">
+                            <option value="">选择常用机场</option>
+                            ${savedAirports.map(airport => `<option value="${airport}">${airport}</option>`).join('')}
+                        </select>
+                        <input type="text" id="segment${segmentCount}-from" placeholder="输入出发机场">
+                        <button onclick="saveAirport('segment${segmentCount}-from')">保存</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>到达机场:</label>
+                    <div class="airport-select">
+                        <select id="segment${segmentCount}-to-select" onchange="updateAirportInput('segment${segmentCount}-to', this.value)">
+                            <option value="">选择常用机场</option>
+                            ${savedAirports.map(airport => `<option value="${airport}">${airport}</option>`).join('')}
+                        </select>
+                        <input type="text" id="segment${segmentCount}-to" placeholder="输入到达机场">
+                        <button onclick="saveAirport('segment${segmentCount}-to')">保存</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>航班号:</label>
+                    <div class="airport-select">
+                        <select id="segment${segmentCount}-flightNo-select" onchange="updateFlightNoInput('segment${segmentCount}-flightNo', this.value)">
+                            <option value="">选择常用航班号</option>
+                            ${savedFlightNumbers.map(num => `<option value="${num}">${num}</option>`).join('')}
+                        </select>
+                        <input type="text" id="segment${segmentCount}-flightNo" placeholder="输入航班号">
+                        <button onclick="saveFlightNo('segment${segmentCount}-flightNo')">保存</button>
+                    </div>
+                    <button class="auto-fill-btn" onclick="autoFillFlightInfo('segment${segmentCount}')">自动填写航班信息</button>
+                </div>
+                
+                <div class="flex-row">
+                    <div class="form-group time-input">
+                        <label>起飞时间(当地时间):</label>
+                        <input type="text" id="segment${segmentCount}-departureTime" placeholder="输入4位数字，如1230" oninput="formatTimeInput(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>值机截止时间:</label>
+                        <select id="segment${segmentCount}-checkinTime">
+                            <option value="">空白</option>
+                            <option value="起飞前45分钟停办">起飞前45分钟停办</option>
+                            <option value="起飞前1小时停办">起飞前1小时停办</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex-row">
+                    <div class="form-group time-input">
+                        <label>抵达时间(当地时间):</label>
+                        <input type="text" id="segment${segmentCount}-arrivalTime" placeholder="输入4位数字，如1230" oninput="formatTimeInput(this)">
+                        <div id="segment${segmentCount}-timeWarning" class="time-warning"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>抵达日期:</label>
+                        <select id="segment${segmentCount}-arrivalDay">
+                            <option value="当日">当日</option>
+                            <option value="次日">次日</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 修改：将中转提示和选座信息放在同一行，各占一半宽度 -->
+                <div class="transfer-seat-container">
+                    <div class="form-group transfer-container">
+                        <label>中转与行李提示:</label>
+                        <select id="segment${segmentCount}-transferBaggageNote" onchange="toggleTransferBaggageInput('segment${segmentCount}')">
+                            <option value="">无提示</option>
+                            <option value="extract">⚠️提取行李⚠️</option>
+                            <option value="no-extract">⚠️无需提取行李⚠️</option>
+                            <option value="extract-transfer">⚠️提取行李，中转到</option>
+                            <option value="transfer">⚠️中转到</option>
+                            <option value="extract-transfer-to">⚠️提取行李，中转至</option>
+                            <option value="transfer-to">⚠️中转至</option>
+                        </select>
+                        <div id="segment${segmentCount}-terminalDiv" class="hidden" style="margin-top: 8px;">
+                            <div class="terminal-input">
+                                <input type="text" id="segment${segmentCount}-terminal" placeholder="输入航站楼或机场">
+                                <span id="segment${segmentCount}-terminalSuffix">航站楼⚠️</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group seat-container">
+                        <label>选座：</label>
+                        <input type="text" id="segment${segmentCount}-seat" placeholder="输入座位号，如6F" 
+                               class="seat-input" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                </div>
+            `;
+            
+            segmentsDiv.appendChild(segmentDiv);
+            
+            // 初始化机场选择框
+            updateAirportSelects();
+        }
+        
+        // 备注相关功能
+        function toggleNote(button, noteText) {
+            // 切换选中状态
+            button.classList.toggle('selected');
+            
+            // 更新选中的备注集合
+            if (button.classList.contains('selected')) {
+                selectedNotes.add(noteText);
+            } else {
+                selectedNotes.delete(noteText);
+            }
+            
+            // 同步更新输入框
+            syncNotesToInput();
+        }
+        
+        function syncNotesToInput() {
+            const notesInput = document.getElementById('additionalNotes');
+            const notesArray = Array.from(selectedNotes);
+            notesInput.value = notesArray.join(', ');
+        }
+        
+        function syncNotesFromInput() {
+            const notesInput = document.getElementById('additionalNotes');
+            const inputValue = notesInput.value.trim();
+            
+            // 清空当前选中状态
+            selectedNotes.clear();
+            document.querySelectorAll('.note-option').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // 如果输入框有内容，解析并更新选中状态
+            if (inputValue) {
+                const notesArray = inputValue.split(',').map(note => note.trim());
+                notesArray.forEach(note => {
+                    if (note) {
+                        selectedNotes.add(note);
+                        // 检查是否有匹配的预设选项并选中
+                        document.querySelectorAll('.note-option').forEach(btn => {
+                            if (btn.textContent.trim() === note) {
+                                btn.classList.add('selected');
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        
+        function autoFillFlightInfo(segmentId) {
+            const flightNo = document.getElementById(`${segmentId}-flightNo`).value;
+            const date = document.getElementById(`${segmentId}-date`).value;
+            
+            if (flightNo && date) {
+                alert("自动填写功能需要集成航班信息API");
+            } else {
+                alert("请先输入航班号和日期");
+            }
+        }
+        
+        function checkTimeLogic(segmentId) {
+            const arrivalTime = document.getElementById(`${segmentId}-arrivalTime`).value;
+            const warningDiv = document.getElementById(`${segmentId}-timeWarning`);
+            
+            if (!arrivalTime) {
+                warningDiv.style.display = 'none';
+                return;
+            }
+            
+            // 检查与前一段航班的抵达时间是否有冲突
+            const segments = document.querySelectorAll('.flight-segment');
+            const currentIndex = Array.from(segments).findIndex(seg => seg.id === segmentId);
+            
+            if (currentIndex > 0) {
+                const prevSegment = segments[currentIndex - 1];
+                const prevArrivalTime = document.getElementById(`${prevSegment.id}-arrivalTime`).value;
+                
+                if (prevArrivalTime && arrivalTime < prevArrivalTime) {
+                    warningDiv.textContent = '⚠️ 时间早于前段航班抵达时间，请检查';
+                    warningDiv.style.display = 'block';
+                } else {
+                    warningDiv.style.display = 'none';
+                }
+            } else {
+                warningDiv.style.display = 'none';
+            }
+        }
+        
+        function updateAirportInput(inputId, value) {
+            if (value) {
+                document.getElementById(inputId).value = value;
+            }
+        }
+        
+        function updateFlightNoInput(inputId, value) {
+            if (value) {
+                document.getElementById(inputId).value = value;
+            }
+        }
+        
+        function saveAirport(inputId) {
+            const airport = document.getElementById(inputId).value.trim();
+            if (airport && !savedAirports.includes(airport)) {
+                savedAirports.push(airport);
+                updateAirportSelects();
+            }
+        }
+        
+        function saveFlightNo(inputId) {
+            const flightNo = document.getElementById(inputId).value.trim();
+            if (flightNo && !savedFlightNumbers.includes(flightNo)) {
+                savedFlightNumbers.push(flightNo);
+                updateFlightNoSelects();
+            }
+        }
+        
+        function updateAirportSelects() {
+            const selects = document.querySelectorAll('select[id$="-from-select"], select[id$="-to-select"], #departureCity-select, #arrivalCity-select');
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">选择常用机场</option>' + 
+                    savedAirports.map(airport => `<option value="${airport}">${airport}</option>`).join('');
+                if (currentValue && savedAirports.includes(currentValue)) {
+                    select.value = currentValue;
+                }
+            });
+        }
+        
+        function updateFlightNoSelects() {
+            const selects = document.querySelectorAll('select[id$="-flightNo-select"]');
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">选择常用航班号</option>' + 
+                    savedFlightNumbers.map(num => `<option value="${num}">${num}</option>`).join('');
+                if (currentValue && savedFlightNumbers.includes(currentValue)) {
+                    select.value = currentValue;
+                }
+            });
+        }
+        
+        function toggleTransferBaggageInput(segmentId) {
+            const select = document.getElementById(`${segmentId}-transferBaggageNote`);
+            const terminalDiv = document.getElementById(`${segmentId}-terminalDiv`);
+            const terminalSuffix = document.getElementById(`${segmentId}-terminalSuffix`);
+            
+            if (select.value === "extract-transfer" || select.value === "transfer") {
+                terminalDiv.style.display = "block";
+                terminalSuffix.textContent = "航站楼⚠️";
+            } else if (select.value === "extract-transfer-to" || select.value === "transfer-to") {
+                terminalDiv.style.display = "block";
+                terminalSuffix.textContent = "机场⚠️";
+            } else {
+                terminalDiv.style.display = "none";
+            }
+        }
+        
+        function getTransferBaggageNote(segmentId) {
+            const select = document.getElementById(`${segmentId}-transferBaggageNote`);
+            const terminal = document.getElementById(`${segmentId}-terminal`).value.trim();
+            
+            switch(select.value) {
+                case "extract":
+                    return "⚠️提取行李⚠️";
+                case "no-extract":
+                    return "⚠️无需提取行李⚠️";
+                case "extract-transfer":
+                    return terminal ? `⚠️提取行李，中转到${terminal}航站楼⚠️` : "";
+                case "transfer":
+                    return terminal ? `⚠️中转到${terminal}航站楼⚠️` : "";
+                case "extract-transfer-to":
+                    return terminal ? `⚠️提取行李，中转至${terminal}机场⚠️` : "";
+                case "transfer-to":
+                    return terminal ? `⚠️中转至${terminal}机场⚠️` : "";
+                default:
+                    return "";
+            }
+        }
+        
+        function toggleLuggageInput() {
+            const select = document.getElementById('checkedLuggage');
+            const luggageDiv = document.getElementById('luggageCountInput');
+            luggageDiv.style.display = (select.value === 'multiple-20' || select.value === 'multiple-23') ? 'block' : 'none';
+        }
+        
+        function removeSegment(id) {
+            const segment = document.getElementById(id);
+            segment.remove();
+        }
+        
+        function getFormattedDate(dateStr) {
+            if (!dateStr) return '';
+            // 处理两种日期格式: "MM月DD日" 或 "YYYY-MM-DD"
+            if (dateStr.includes('月') && dateStr.includes('日')) {
+                return dateStr;
+            }
+            
+            try {
+                const date = new Date(dateStr);
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `${month}月${day}日`;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+        
+        function getCityName(airportStr) {
+            // 提取城市名称（去掉航站楼信息）
+            return airportStr.split(' ')[0].replace(/T\d+$/, '').replace(/[A-Za-zА-Яа-я]+$/, '');
+        }
+        
+        function generateMessage() {
+            const passengerNames = document.getElementById('passengerNames').value;
+            const tripType = document.getElementById('tripType').value;
+            const departureCity = document.getElementById('departureCity').value;
+            const arrivalCity = document.getElementById('arrivalCity').value;
+            const handLuggage = document.getElementById('handLuggage').value;
+            
+            // 获取备注信息
+            const additionalNotes = document.getElementById('additionalNotes').value.trim();
+            
+            // 处理托运行李
+            let checkedLuggage = document.getElementById('checkedLuggage').value;
+            if (checkedLuggage === 'multiple-20' || checkedLuggage === 'multiple-23') {
+                const count = document.getElementById('luggageCount').value || '1';
+                const weight = checkedLuggage === 'multiple-20' ? '20' : '23';
+                checkedLuggage = `共${count}件，每件${weight}公斤`;
+            }
+            
+            let message = `乘客${passengerNames}您好：\n`;
+            message += `${departureCity}➡️${arrivalCity}${tripType}\n\n`;
+            
+            // 处理每个航班段
+            const segments = document.querySelectorAll('.flight-segment');
+            let isReturnTrip = false;
+            let lastDate = null;
+            
+            segments.forEach((segment, index) => {
+                const id = segment.id;
+                
+                const date = getFormattedDate(document.getElementById(`${id}-date`).value);
+                const from = document.getElementById(`${id}-from`).value;
+                const to = document.getElementById(`${id}-to`).value;
+                const flightNo = document.getElementById(`${id}-flightNo`).value;
+                const departureTime = document.getElementById(`${id}-departureTime`).value;
+                const checkinTime = document.getElementById(`${id}-checkinTime`).value;
+                const arrivalTime = document.getElementById(`${id}-arrivalTime`).value;
+                const arrivalDay = document.getElementById(`${id}-arrivalDay`).value;
+                const transferBaggageNote = getTransferBaggageNote(id);
+                const seatInfo = document.getElementById(`${id}-seat`).value.trim(); // 获取选座信息
+                
+                // 检查是否是返程航班
+                const isReturnSegment = tripType.includes("往返") && index >= segments.length / 2;
+                if (isReturnSegment && !isReturnTrip) {
+                    message += `返程日期：${date}\n`;
+                    isReturnTrip = true;
+                    lastDate = null; // 重置日期显示
+                }
+                
+                // 只在日期变化或首次显示日期
+                if (date !== lastDate && !isReturnSegment) {
+                    message += `${date}\n`;
+                    lastDate = date;
+                }
+                
+                message += `${from}➡️${to}\n`;
+                message += `航班号:【${flightNo}】\n`;
+                
+                // 处理起飞时间（添加前一日后半夜提示）
+                let departureText = `🛫起飞:${getCityName(from)}时间${departureTime}`;
+                const [hours] = departureTime.split(':').map(Number);
+                if (hours >= 0 && hours < 4 && date) {
+                    const prevDay = getPreviousDay(date);
+                    departureText += `(${prevDay}后半夜)`;
+                }
+                message += `${departureText}\n`;
+                
+                // 只有当值机时间有选择时才显示
+                if (checkinTime) {
+                    message += `🎫值机: ${checkinTime}\n`;
+                }
+                
+                // 添加选座信息（如果有）
+                if (seatInfo) {
+                    message += `💺选座: ${seatInfo}\n`;
+                }
+                
+                // 处理抵达时间
+                let arrivalText = `🛬抵达:`;
+                if (arrivalDay === "次日") {
+                    arrivalText += "次日";
+                }
+                arrivalText += `${getCityName(to)}时间${arrivalTime}\n\n`;
+                message += arrivalText;
+                
+                if (transferBaggageNote) message += `${transferBaggageNote}\n\n`;
+            });
+            
+            message += `手提要求：${handLuggage}\n`;
+            message += `托运要求：${checkedLuggage}\n`;
+            // 添加备注信息（如果有）
+            if (additionalNotes) {
+                message += `备注：${additionalNotes}\n`;
+            }
+            message += `\n`;
+            
+            message += `🔔温馨提示：\n`;
+            message += `起降时间均为当地时间；\n`;
+            message += `时间为24小时制；\n`;
+            message += `凭护照办理值机。\n`;
+            message += `长城票务：89128915882\n`;
+            message += `✈️祝您旅途愉快！✈️`;
+            
+            document.getElementById('output').textContent = message;
+        }
+        
+        function resetForm() {
+            document.getElementById('flightSegments').innerHTML = '';
+            segmentCount = 0;
+            document.getElementById('passengerNames').value = '';
+            document.getElementById('departureCity').value = '';
+            document.getElementById('arrivalCity').value = '';
+            document.getElementById('output').textContent = '';
+            document.getElementById('additionalNotes').value = '';
+            
+            // 重置备注选择
+            selectedNotes.clear();
+            document.querySelectorAll('.note-option').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            addFlightSegment();
+        }
+        
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            navigator.clipboard.writeText(output.textContent)
+                .then(() => alert('已复制到剪贴板!'))
+                .catch(err => alert('复制失败: ' + err));
+        }
+        
+        // 初始化
+        window.onload = function() {
+            initAirportSelects();
+            addFlightSegment();
+        };
+    </script>
+</body>
+</html>
+    
